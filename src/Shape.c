@@ -32,7 +32,7 @@ LineHit Sphere_GetLineHit(const Sphere *sphere, const Line *line) {
 	vec3s dir = LINE_GET_DIR(*line);
 
 	float a = glms_dot(dir, dir);
-	float b = glms_dot(dir, origin_minus_center);
+	float b = 2 * glms_dot(dir, origin_minus_center);
 	float c = glms_dot(origin_minus_center, origin_minus_center) - sphere->radius * sphere->radius;
 
 	float delta = b * b - 4 * a * c;
@@ -56,7 +56,7 @@ LineHit Sphere_GetLineHit(const Sphere *sphere, const Line *line) {
 
 	hit.found = true;
 	hit.normal = glms_normalize(glms_vec3_sub(
-			glms_vec3_add(origin, glms_vec3_scale(dir, hit.distance)),
+			glms_vec3_lerp(line->start, line->end, hit.distance),
 			sphere->center
 			));
 

@@ -25,7 +25,7 @@ typedef struct Sphere {
 } Sphere;
 
 typedef struct Plane {
-	/* A point p is inside a plane if dot(p, normal) = d */
+	/* A point p is on a plane if dot(p, normal) = d */
 	vec3s normal;
 	float d;
 } Plane;
@@ -51,8 +51,8 @@ typedef struct Shape {
 	#undef EXPAND_AS_DECLARATION
 
 	vec3s k_diffuse;
-
-	float k_reflection;
+	vec3s k_specular;
+	float shineness;
 } Shape;
 
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line);

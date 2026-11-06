@@ -12,6 +12,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+find_package(OpenMP QUIET COMPONENTS C)
+
 # Executável
 add_executable(${PROJECT_NAME}
 	${all_SRCS}
@@ -21,6 +23,11 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
 	m
 )
+
+if(OpenMP_C_FOUND)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_C)
+	message(STATUS "Linking OpenMP...")
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 	include/
