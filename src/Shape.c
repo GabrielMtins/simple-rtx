@@ -91,6 +91,8 @@ LineHit Plane_GetLineHit(const Plane *plane, const Line *line) {
 ShapeType ShapeType_GetTypeFromString(const char *str) {
 	ShapeType type = SHAPE_NONE;
 
+	if(str[0] == '\0') return type;
+
 	#define EXPAND_AS_STRING(id, type, ...) #type,
 	static const char *type_str_list[] = {
 		FOR_SHAPE_LIST(EXPAND_AS_STRING)

@@ -161,17 +161,3 @@ Shape * Scene_AddShape(Scene *scene, ShapeType type) {
 
 	return shape;
 }
-
-#define EXPAND_AS_FUNC(id, dtype, ...) \
-	Shape * Scene_Add##dtype(Scene *scene, dtype _##dtype) { \
-		Shape shape = { \
-			.type = id, \
-			.data._##dtype = _##dtype, \
-			.k_diffuse = {1.0f, 1.0f, 1.0f}, \
-			.k_specular = {0.0f, 0.0f, 0.0f}, \
-		}; \
-		arrput(scene->shapes, shape); \
-		return &scene->shapes[arrlen(scene->shapes) - 1];\
-	}
-FOR_SHAPE_LIST(EXPAND_AS_FUNC)
-#undef EXPAND_AS_FUNC

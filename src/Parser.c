@@ -170,5 +170,7 @@ bool Parser_ParseFile(RenderData *data, const char *filename) {
 	Parser_ParseLights(data, cJSON_GetObjectItemCaseSensitive(json, "lights"));
 	Parser_ParseShapes(data, cJSON_GetObjectItemCaseSensitive(json, "shapes"));
 
+	cJSON_Delete(json);
+
 	return true;
 }

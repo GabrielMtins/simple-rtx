@@ -36,8 +36,4 @@ void Scene_AddLight(Scene *scene, Light light);
 
 Shape * Scene_AddShape(Scene *scene, ShapeType type);
 
-#define EXPAND_AS_FUNC(id, type, ...) Shape * Scene_Add##type(Scene *scene, type _##type);
-FOR_SHAPE_LIST(EXPAND_AS_FUNC)
-#undef EXPAND_AS_FUNC
-
 #endif

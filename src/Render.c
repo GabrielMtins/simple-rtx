@@ -56,25 +56,10 @@ static Color Render_ComputePixel(const RenderData *data, int i, int j) {
 }
 
 void Render_CleanStart(RenderData *render_data) {
-	Shape *shape;
 	memset(render_data, 0, sizeof(RenderData));
 
 	render_data->export.w = 640;
 	render_data->export.h = 360;
-
-	Image_Create(&render_data->image, render_data->export.w, render_data->export.h);
-
-	/*
-	Scene_AddLight(
-			&render_data->scene,
-			(Light) {
-				.position = {0.0f, 3.0f, 0.0f},
-				.diffuse = {1.0f, 1.0f, 1.0f},
-				.specular = {1.0f, 1.0f, 1.0f},
-				.distance = 32.0f
-			}
-			);
-			*/
 }
 
 void Render_RenderImage(RenderData *data) {
