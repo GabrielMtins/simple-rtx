@@ -1,6 +1,7 @@
 #include "Shape.h"
 
 #include <math.h>
+#include <string.h>
 
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line) {
 	LineHit hit;
@@ -85,4 +86,22 @@ LineHit Plane_GetLineHit(const Plane *plane, const Line *line) {
 	hit.normal = plane->normal;
 
 	return hit;
+}
+
+ShapeType ShapeType_GetTypeFromString(const char *str) {
+	ShapeType type = SHAPE_NONE;
+
+	#define EXPAND_AS_STRING(id, type, ...) #type,
+	static const char *type_str_list[] = {
+		FOR_SHAPE_LIST(EXPAND_AS_STRING)
+	};
+	#undef EXPAND_AS_STRING
+
+	for(int i = 0; i < NUM_SHAPE_TYPES; i++) {
+		if(strcmp(str, type_str_list[i]) == 0) {
+			return (ShapeType) i;
+		}
+	}
+
+	return type;
 }

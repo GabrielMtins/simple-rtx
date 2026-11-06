@@ -3,12 +3,14 @@
 
 #include <stdint.h>
 
+typedef uint8_t * ByteVector;
+
 typedef struct Color {
 	uint8_t r, g, b;
 } Color;
 
 typedef struct Image {
-	uint8_t *data;
+	ByteVector data;
 	int w, h;
 } Image;
 

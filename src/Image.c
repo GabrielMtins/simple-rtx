@@ -3,12 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stb_ds.h>
 #include <stb_image_write.h>
 
 #define NUM_CHANNELS (sizeof(Color) / sizeof(uint8_t))
 
 void Image_Create(Image *image, int w, int h) {
-	image->data = malloc(w * h * NUM_CHANNELS);
+	arrfree(image->data);
+
+	arraddnindex(image->data, w * h * NUM_CHANNELS);
 	image->w = w;
 	image->h = h;
 
@@ -37,5 +40,5 @@ int Image_Export(Image *image, const char *filename) {
 }
 
 void Image_Free(Image *image) {
-	free(image->data);
+	arrfree(image->data);
 }

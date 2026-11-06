@@ -6,7 +6,7 @@ file(GLOB_RECURSE all_SRCS
 		"${PROJECT_SOURCE_DIR}/src/*.c"
         )
 	
-#file(GLOB inih_SRCS "${PROJECT_SOURCE_DIR}/external/inih/ini.c")
+file(GLOB cjson_SRCS "${PROJECT_SOURCE_DIR}/external/cjson/cJSON.c")
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -17,7 +17,7 @@ find_package(OpenMP QUIET COMPONENTS C)
 # Executável
 add_executable(${PROJECT_NAME}
 	${all_SRCS}
-	#${inih_SRCS}
+	${cjson_SRCS}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -33,6 +33,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	include/
 	external/cglm/include/
 	external/stb/
+	external/cjson/
 )
 
 # Flags de compilação (opcional, mas recomendado)

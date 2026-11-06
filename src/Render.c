@@ -5,7 +5,7 @@
 #define MAX_DISTANCE 1000.0f
 
 static Color Render_Vec3ToColor(vec3s color);
-static Color RenderData_ComputePixel(const RenderData *data, int i, int j);
+static Color Render_ComputePixel(const RenderData *data, int i, int j);
 
 static Color Render_Vec3ToColor(vec3s color) {
 	color = glms_vec3_scale(glms_vec3_clamp(color, 0.0f, 1.0f), 255.0f);
@@ -17,9 +17,9 @@ static Color Render_Vec3ToColor(vec3s color) {
 	};
 }
 
-static Color RenderData_ComputePixel(const RenderData *data, int i, int j) {
-	int w = data->config.w;
-	int h = data->config.h;
+static Color Render_ComputePixel(const RenderData *data, int i, int j) {
+	int w = data->export.w;
+	int h = data->export.h;
 
 	vec3s dir = glms_vec3_normalize((vec3s){
 		(float) (i - w / 2) / h,
@@ -29,14 +29,19 @@ static Color RenderData_ComputePixel(const RenderData *data, int i, int j) {
 
 	dir = glms_vec3_rotate(
 			dir,
-			data->config.yaw,
+			data->scene.camera.pitch,
+			(vec3s) {1.0f, 0.0f, 0.0f}
+			);
+
+	dir = glms_vec3_rotate(
+			dir,
+			data->scene.camera.yaw,
 			(vec3s) {0.0f, 1.0f, 0.0f}
 			);
 
-
 	Line line;
 
-	line.start = data->config.camera_position;
+	line.start = data->scene.camera.position;
 	line.end = glms_vec3_add(line.start, glms_vec3_scale(dir, 1000.0f));
 
 	LineHit hit;
@@ -50,54 +55,35 @@ static Color RenderData_ComputePixel(const RenderData *data, int i, int j) {
 	return Render_Vec3ToColor(found_color);
 }
 
-void RenderData_CleanStart(RenderData *render_data) {
+void Render_CleanStart(RenderData *render_data) {
 	Shape *shape;
 	memset(render_data, 0, sizeof(RenderData));
 
-	render_data->config.w = 2560;
-	render_data->config.h = 1440;
+	render_data->export.w = 640;
+	render_data->export.h = 360;
 
-	Image_Create(&render_data->image, render_data->config.w, render_data->config.h);
+	Image_Create(&render_data->image, render_data->export.w, render_data->export.h);
 
-	shape = Scene_AddPlane(
-			&render_data->scene,
-			(Plane) {
-				.normal = {0.0f, 1.0f, 0.0f},
-				.d = -1.0f
-			}
-			);
-
-	//shape->k_diffuse = (vec3s) {1.0f, 0.0f, 0.0f};
-
-	shape = Scene_AddSphere(
-			&render_data->scene,
-			(Sphere) {
-				.center = {0.0f, 0.1f, 8.0f},
-				.radius = 1.0f,
-			}
-			);
-
-	shape->k_diffuse = (vec3s) {0.0f, 1.0f, 1.0f};
-	shape->k_specular = (vec3s) {1.0f, 1.0f, 1.0f};
-	shape->shineness = 8;
-
-	render_data->scene.ambient = (vec3s) {0.2f, 0.2f, 0.2f};
-
+	/*
 	Scene_AddLight(
 			&render_data->scene,
 			(Light) {
-				.position = {2.0f, 8.0f, -2.0f},
+				.position = {0.0f, 3.0f, 0.0f},
 				.diffuse = {1.0f, 1.0f, 1.0f},
 				.specular = {1.0f, 1.0f, 1.0f},
+				.distance = 32.0f
 			}
 			);
+			*/
 }
 
-void RenderData_Render(RenderData *data) {
-	int w = data->config.w;
-	int h = data->config.h;
+void Render_RenderImage(RenderData *data) {
+	int w = data->export.w;
+	int h = data->export.h;
 
 	int i, j;
+
+	Image_Create(&data->image, w, h);
 
 	#pragma omp parallel for collapse(2) private(i) schedule(dynamic)
 	for(j = 0; j < h; j++) {
@@ -106,7 +92,7 @@ void RenderData_Render(RenderData *data) {
 					&data->image,
 					i,
 					j,
-					RenderData_ComputePixel(data, i, j)
+					Render_ComputePixel(data, i, j)
 					);
 		}
 	}

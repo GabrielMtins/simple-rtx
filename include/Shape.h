@@ -36,8 +36,9 @@ typedef struct Plane {
 
 #define EXPAND_AS_ENUM(id, ...) id,
 typedef enum ShapeType {
+	SHAPE_NONE = -1,
 	FOR_SHAPE_LIST(EXPAND_AS_ENUM)
-	NUM_MESH_TYPES
+	NUM_SHAPE_TYPES
 } ShapeType;
 #undef EXPAND_AS_ENUM
 
@@ -56,6 +57,8 @@ typedef struct Shape {
 } Shape;
 
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line);
+
+ShapeType ShapeType_GetTypeFromString(const char *str);
 
 #define EXPAND_AS_FUNCTION_DECLARATION(id, type, hit_func) LineHit hit_func(const type *data, const Line *line);
 FOR_SHAPE_LIST(EXPAND_AS_FUNCTION_DECLARATION)

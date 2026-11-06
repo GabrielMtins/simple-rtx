@@ -4,21 +4,20 @@
 #include "Scene.h"
 #include "Image.h"
 
-typedef struct SceneConfig {
+#define EXPORT_FILENAME_SIZE 63
+typedef struct ExportConfig {
 	int w, h;
-	vec3s camera_position;
-	float pitch, yaw;
-	char *filename;
-} SceneConfig;
+	char filename[EXPORT_FILENAME_SIZE + 1];
+} ExportConfig;
 
 typedef struct RenderData {
 	Scene scene;
 	Image image;
-	SceneConfig config;
+	ExportConfig export;
 } RenderData;
 
-void RenderData_CleanStart(RenderData *render_data);
+void Render_CleanStart(RenderData *render_data);
 
-void RenderData_Render(RenderData *render_data);
+void Render_RenderImage(RenderData *render_data);
 
 #endif

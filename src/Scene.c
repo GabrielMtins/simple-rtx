@@ -4,6 +4,7 @@
 
 static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const Light *light);
 static vec3s Light_GetShapeAmbientColor(const Scene *scene, const LineHit *hit);
+static float Light_GetAttenuation(const LineHit *hit, const Light *light);
 static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int light_index);
 
 static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const Light *light) {
@@ -27,6 +28,24 @@ static vec3s Light_GetShapeAmbientColor(const Scene *scene, const LineHit *hit) 
 	return glms_vec3_mul(scene->ambient, shape->k_diffuse);
 }
 
+static float Light_GetAttenuation(const LineHit *hit, const Light *light) {
+	if(fabsf(light->distance) < 0.01f) {
+		return 0.0f;
+	}
+
+	float k =
+		glms_vec3_distance(hit->position, light->position) /
+		light->distance;
+
+	k = glm_clamp(k, 0.0f, 1.0f);
+
+	k = 1.0f - k;
+
+	k *= k;
+
+	return k;
+}
+
 static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int light_index) {
 	vec3s final_color = glms_vec3_zero();
 
@@ -38,7 +57,7 @@ static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int l
 	}
 
 	vec3s light_dir = glms_normalize(glms_vec3_sub(light->position, hit->position));
-	vec3s view_dir = glms_normalize(glms_vec3_sub(scene->camera_position, hit->position));
+	vec3s view_dir = glms_normalize(glms_vec3_sub(scene->camera.position, hit->position));
 	vec3s ref_dir = glms_normalize(
 			glms_vec3_sub(
 				glms_vec3_scale(
@@ -74,7 +93,11 @@ static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int l
 				);
 	}
 
-	return final_color;
+	return glms_vec3_scale(
+			final_color,
+			Light_GetAttenuation(hit, light)
+			)
+			;
 }
 
 LineHit Scene_Trace(const Scene *scene, const Line *line) {
@@ -125,6 +148,18 @@ vec3s Scene_GetLightContribution(const Scene *scene, const LineHit *hit) {
 
 void Scene_AddLight(Scene *scene, Light light) {
 	arrput(scene->lights, light);
+}
+
+Shape * Scene_AddShape(Scene *scene, ShapeType type) {
+	Shape *shape = arraddnptr(scene->shapes, 1);
+
+	memset(shape, 0, sizeof(Shape));
+
+	shape->type = type;
+	shape->shineness = 8.0f;
+	shape->k_diffuse = (vec3s) {1.0f, 1.0f, 1.0f};
+
+	return shape;
 }
 
 #define EXPAND_AS_FUNC(id, dtype, ...) \
