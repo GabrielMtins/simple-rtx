@@ -24,6 +24,14 @@ typedef struct Sphere {
 	float radius;
 } Sphere;
 
+typedef struct Box {
+	vec3s center;
+	vec3s size;
+
+	mat3s rotation_matrix;
+	mat3s inv_rotation_matrix;
+} Box;
+
 typedef struct Plane {
 	/* A point p is on a plane if dot(p, normal) = d */
 	vec3s normal;
@@ -32,7 +40,8 @@ typedef struct Plane {
 
 #define FOR_SHAPE_LIST(DO) \
 	DO(SHAPE_SPHERE, Sphere, Sphere_GetLineHit) \
-	DO(SHAPE_PLANE,  Plane,  Plane_GetLineHit)
+	DO(SHAPE_PLANE,  Plane,  Plane_GetLineHit) \
+	DO(SHAPE_BOX,    Box,    Box_GetLineHit) 
 
 #define EXPAND_AS_ENUM(id, ...) id,
 typedef enum ShapeType {
@@ -59,6 +68,8 @@ typedef struct Shape {
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line);
 
 ShapeType ShapeType_GetTypeFromString(const char *str);
+
+mat3s Shape_MakeRotMat(vec3s rotations);
 
 #define EXPAND_AS_FUNCTION_DECLARATION(id, type, hit_func) LineHit hit_func(const type *data, const Line *line);
 FOR_SHAPE_LIST(EXPAND_AS_FUNCTION_DECLARATION)

@@ -146,6 +146,20 @@ static void Parser_ParseShape(RenderData *data, const cJSON *json) {
 			Parser_GetFloat(shape->data._Plane.d, json, "dot");
 			break;
 
+		case SHAPE_BOX:
+			Parser_GetVec3(shape->data._Box.size, json, "size");
+			Parser_GetVec3(shape->data._Box.center, json, "center");
+
+			{
+				vec3s rotations = GLMS_VEC3_ZERO;
+				Parser_GetVec3(rotations, json, "rotations");
+				mat3s m = Shape_MakeRotMat(rotations);
+
+				shape->data._Box.rotation_matrix = m;
+				shape->data._Box.inv_rotation_matrix = glms_mat3_inv(m);
+			}
+			break;
+
 		default:
 			break;
 	}
