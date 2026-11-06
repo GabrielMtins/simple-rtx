@@ -2,15 +2,15 @@
 
 #include <math.h>
 
-LineHit Shape_GetLineHit(const Shape *mesh, const Line *line) {
+LineHit Shape_GetLineHit(const Shape *shape, const Line *line) {
 	LineHit hit;
 
 	#define EXPAND_AS_CASE(id, type, hit_func) \
 		case id: \
-			hit = hit_func(&mesh->data._##type, line); \
+			hit = hit_func(&shape->data._##type, line); \
 		break;
 
-	switch(mesh->type) {
+	switch(shape->type) {
 		FOR_SHAPE_LIST(EXPAND_AS_CASE)
 
 		default:

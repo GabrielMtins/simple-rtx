@@ -2,7 +2,7 @@
 #define SHAPE_H
 
 #include <stdbool.h>
-#include "cglm/struct.h"
+#include <cglm/struct.h>
 
 typedef struct Line {
 	vec3s start;
@@ -14,7 +14,9 @@ typedef struct Line {
 typedef struct LineHit {
 	bool found;
 	vec3s normal;
+	vec3s position;
 	float distance;
+	int shape_index;
 } LineHit;
 
 typedef struct Sphere {
@@ -53,7 +55,7 @@ typedef struct Shape {
 	float k_reflection;
 } Shape;
 
-LineHit Shape_GetLineHit(const Shape *mesh, const Line *line);
+LineHit Shape_GetLineHit(const Shape *shape, const Line *line);
 
 #define EXPAND_AS_FUNCTION_DECLARATION(id, type, hit_func) LineHit hit_func(const type *data, const Line *line);
 FOR_SHAPE_LIST(EXPAND_AS_FUNCTION_DECLARATION)

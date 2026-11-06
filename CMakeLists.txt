@@ -25,6 +25,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
 	include/
 	external/cglm/include/
+	external/stb/
 )
 
 # Flags de compilação (opcional, mas recomendado)
