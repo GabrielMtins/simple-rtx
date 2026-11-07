@@ -120,13 +120,11 @@ LineHit Sphere_GetLineHit(const Sphere *sphere, const Line *line) {
 
 	hit.found = false;
 
-	vec3s origin = line->start;
-	vec3s origin_minus_center = glms_vec3_sub(origin, sphere->center);
-	vec3s dir = LINE_GET_DIR(*line);
+	vec3s position_minus_center = glms_vec3_sub(line->position, sphere->center);
 
-	float a = glms_dot(dir, dir);
-	float b = 2 * glms_dot(dir, origin_minus_center);
-	float c = glms_dot(origin_minus_center, origin_minus_center) - sphere->radius * sphere->radius;
+	float a = glms_dot(line->dir, line->dir);
+	float b = 2 * glms_dot(line->dir, position_minus_center);
+	float c = glms_dot(position_minus_center, position_minus_center) - sphere->radius * sphere->radius;
 
 	float delta = b * b - 4 * a * c;
 
@@ -139,16 +137,16 @@ LineHit Sphere_GetLineHit(const Sphere *sphere, const Line *line) {
 	t1 = (-b - sqrt_delta) / (2 * a);
 	t2 = (-b + sqrt_delta) / (2 * a);
 
-	if(t1 < t2 && t1 > 0.0f && t1 < 1.0f) {
+	if(t1 < t2 && t1 > 0.0f) {
 		hit.distance = t1;
-	} else if (t2 < t1 && t2 > 0.0f && t2 < 1.0f) {
+	} else if (t2 < t1 && t2 > 0.0f) {
 		hit.distance = t2;
 	} else {
 		return hit;
 	}
 
 	hit.found = true;
-	hit.position = glms_vec3_lerp(line->start, line->end, hit.distance);
+	hit.position = LINE_GET_POINT(*line, hit.distance);
 	hit.normal = glms_normalize(glms_vec3_sub(
 				hit.position,
 				sphere->center
@@ -162,8 +160,8 @@ LineHit Plane_GetLineHit(const Plane *plane, const Line *line) {
 
 	hit.found = false;
 
-	float numerator = (plane->d - glms_dot(plane->normal, line->start));
-	float denominator = glms_dot(plane->normal, LINE_GET_DIR(*line));
+	float numerator = (plane->d - glms_dot(plane->normal, line->position));
+	float denominator = glms_dot(plane->normal, line->dir);
 
 	if(fabsf(denominator) < 0.01f) {
 		return hit;
@@ -171,13 +169,13 @@ LineHit Plane_GetLineHit(const Plane *plane, const Line *line) {
 
 	hit.distance = numerator / denominator;
 
-	if(hit.distance < 0.0f || hit.distance > 1.0f) {
+	if(hit.distance < 0.0f) {
 		return hit;
 	}
 
 	hit.found = true;
 	hit.normal = plane->normal;
-	hit.position = glms_vec3_lerp(line->start, line->end, hit.distance);
+	hit.position = LINE_GET_POINT(*line, hit.distance);
 
 	return hit;
 }
@@ -186,15 +184,15 @@ LineHit Box_GetLineHit(const Box *box, const Line *line) {
 	LineHit hit;
 
 	Line transformed_line = {
-		.start = glms_mat3_mulv(box->inv_rotation_matrix, glms_vec3_sub(line->start, box->center)),
-		.end = glms_mat3_mulv(box->inv_rotation_matrix, glms_vec3_sub(line->end, box->center)),
+		.position = glms_mat3_mulv(box->inv_rotation_matrix, glms_vec3_sub(line->position, box->center)),
+		.dir = glms_mat3_mulv(box->inv_rotation_matrix, line->dir),
 	};
 
 	hit = Box_FoundHitNormalized(box->size, &transformed_line);
 
 	if(hit.found) {
 		hit.normal = glms_mat3_mulv(box->rotation_matrix, hit.normal);
-		hit.position = glms_vec3_lerp(line->start, line->end, hit.distance);
+		hit.position = LINE_GET_POINT(*line, hit.distance);
 	}
 
 	return hit;

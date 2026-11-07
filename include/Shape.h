@@ -5,11 +5,12 @@
 #include <cglm/struct.h>
 
 typedef struct Line {
-	vec3s start;
-	vec3s end;
+	vec3s position;
+	/* dir is normalized */
+	vec3s dir;
 } Line;
 
-#define LINE_GET_DIR(line) (glms_vec3_sub((line).end, (line).start))
+#define LINE_GET_POINT(line, u) glms_vec3_add((line).position, glms_vec3_scale((line).dir, u))
 
 typedef struct LineHit {
 	bool found;

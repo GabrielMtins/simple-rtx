@@ -10,14 +10,16 @@ static vec3s Light_GetContribution(const Scene *scene, const HitCtx *ctx, int li
 static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const Light *light) {
 	HitCtx ctx = {
 		.line = {
-			.start = hit->position,
-			.end = light->position
+			.position = hit->position,
+			.dir = glms_vec3_normalize(glms_vec3_sub(light->position, hit->position)),
 		}
 	};
 
-	ctx.line.start = glms_vec3_lerp(ctx.line.start, ctx.line.end, 0.01f);
+	ctx.line.position = LINE_GET_POINT(ctx.line, 0.01f);
 
-	return Scene_Trace(scene, &ctx);
+	if(!Scene_Trace(scene, &ctx)) return false;
+
+	return ctx.hit.distance > glms_vec3_distance(light->position, hit->position);
 }
 
 static vec3s Light_GetShapeAmbientColor(const Scene *scene, const HitCtx *ctx) {
@@ -124,24 +126,24 @@ bool Scene_Trace(const Scene *scene, HitCtx *ctx) {
 }
 
 Line Scene_GetReflectionLine(const Scene *scene, const HitCtx *ctx) {
-	vec3s dir = glms_normalize(glms_vec3_sub(ctx->line.end, ctx->line.start));
-
-	float dist = glms_vec3_distance(ctx->line.start, ctx->line.end);
-
 	vec3s ref = glms_normalize(
 			glms_vec3_sub(
 				glms_vec3_scale(
 					ctx->hit.normal,
-					2.0f * glms_dot(dir, ctx->hit.normal)
+					2.0f * glms_dot(ctx->line.dir, ctx->hit.normal)
 					),
-				dir
+				ctx->line.dir
 				)
 			);
 
-	return (Line) {
-		.start = glms_vec3_add(ctx->hit.position, glms_vec3_scale(dir, 0.01f)),
-		.end = glms_vec3_add(ctx->hit.position, glms_vec3_scale(dir, dist)),
+	Line line = {
+		.position = ctx->hit.position,
+		.dir = ref
 	};
+
+	line.position = LINE_GET_POINT(line, 0.01f);
+
+	return line;
 }
 
 vec3s Scene_GetLightContribution(const Scene *scene, HitCtx *ctx) {
