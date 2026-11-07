@@ -60,9 +60,12 @@ typedef struct Shape {
 	} data;
 	#undef EXPAND_AS_DECLARATION
 
-	vec3s k_diffuse;
-	vec3s k_specular;
+	vec3s diffuse;
+	vec3s specular;
 	float shineness;
+
+	/* 1.0f for full reflection, 0.0f for none. */
+	float part_reflection;
 } Shape;
 
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line);

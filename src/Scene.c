@@ -3,29 +3,27 @@
 #include <stb_ds.h>
 
 static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const Light *light);
-static vec3s Light_GetShapeAmbientColor(const Scene *scene, const LineHit *hit);
+static vec3s Light_GetShapeAmbientColor(const Scene *scene, const HitCtx *ctx);
 static float Light_GetAttenuation(const LineHit *hit, const Light *light);
-static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int light_index);
+static vec3s Light_GetContribution(const Scene *scene, const HitCtx *ctx, int light_index);
 
 static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const Light *light) {
-	bool visible;
-
-	Line line = {
-		.start = hit->position,
-		.end = light->position
+	HitCtx ctx = {
+		.line = {
+			.start = hit->position,
+			.end = light->position
+		}
 	};
 
-	line.start = glms_vec3_lerp(line.start, line.end, 0.01f);
+	ctx.line.start = glms_vec3_lerp(ctx.line.start, ctx.line.end, 0.01f);
 
-	visible = !Scene_Trace(scene, &line).found;
-
-	return visible;
+	return Scene_Trace(scene, &ctx);
 }
 
-static vec3s Light_GetShapeAmbientColor(const Scene *scene, const LineHit *hit) {
-	Shape *shape = &scene->shapes[hit->shape_index];
+static vec3s Light_GetShapeAmbientColor(const Scene *scene, const HitCtx *ctx) {
+	Shape *shape = &scene->shapes[ctx->hit.shape_index];
 
-	return glms_vec3_mul(scene->ambient, shape->k_diffuse);
+	return glms_vec3_mul(scene->ambient, shape->diffuse);
 }
 
 static float Light_GetAttenuation(const LineHit *hit, const Light *light) {
@@ -46,9 +44,10 @@ static float Light_GetAttenuation(const LineHit *hit, const Light *light) {
 	return k;
 }
 
-static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int light_index) {
+static vec3s Light_GetContribution(const Scene *scene, const HitCtx *ctx, int light_index) {
 	vec3s final_color = glms_vec3_zero();
 
+	const LineHit *hit = &ctx->hit;
 	const Light *light = &scene->lights[light_index];
 	const Shape *shape = &scene->shapes[hit->shape_index];
 
@@ -75,7 +74,7 @@ static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int l
 		final_color = glms_vec3_add(
 				final_color,
 				glms_vec3_scale(
-					glms_vec3_mul(shape->k_diffuse, light->diffuse),
+					glms_vec3_mul(shape->diffuse, light->diffuse),
 					diffuse_part
 					)
 				);
@@ -87,7 +86,7 @@ static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int l
 		final_color = glms_vec3_add(
 				final_color,
 				glms_vec3_scale(
-					glms_vec3_mul(shape->k_specular, light->specular),
+					glms_vec3_mul(shape->specular, light->specular),
 					ref_part
 					)
 				);
@@ -100,45 +99,61 @@ static vec3s Light_GetContribution(const Scene *scene, const LineHit *hit, int l
 			;
 }
 
-LineHit Scene_Trace(const Scene *scene, const Line *line) {
-	LineHit closest_hit;
+bool Scene_Trace(const Scene *scene, HitCtx *ctx) {
 	int len = arrlen(scene->shapes);
 
-	closest_hit.found = false;
+	ctx->hit.found = false;
 
 	for(int i = 0; i < len; i++) {
 		LineHit current_hit;
 
 		current_hit = Shape_GetLineHit(
 				&scene->shapes[i],
-				line
+				&ctx->line
 				);
 
 		if(!current_hit.found) continue;
 
-		if(!closest_hit.found || current_hit.distance < closest_hit.distance) {
-			closest_hit = current_hit;
-			closest_hit.shape_index = i;
+		if(!ctx->hit.found || current_hit.distance < ctx->hit.distance) {
+			ctx->hit = current_hit;
+			ctx->hit.shape_index = i;
 		}
 	}
 
-	if(closest_hit.found) {
-		closest_hit.position = glms_vec3_lerp(line->start, line->end, closest_hit.distance);
-	}
-
-	return closest_hit;
+	return ctx->hit.found;
 }
 
-vec3s Scene_GetLightContribution(const Scene *scene, const LineHit *hit) {
+Line Scene_GetReflectionLine(const Scene *scene, const HitCtx *ctx) {
+	vec3s dir = glms_normalize(glms_vec3_sub(ctx->line.end, ctx->line.start));
+
+	float dist = glms_vec3_distance(ctx->line.start, ctx->line.end);
+
+	vec3s ref = glms_normalize(
+			glms_vec3_sub(
+				glms_vec3_scale(
+					ctx->hit.normal,
+					2.0f * glms_dot(dir, ctx->hit.normal)
+					),
+				dir
+				)
+			);
+
+	return (Line) {
+		.start = glms_vec3_add(ctx->hit.position, glms_vec3_scale(dir, 0.01f)),
+		.end = glms_vec3_add(ctx->hit.position, glms_vec3_scale(dir, dist)),
+	};
+}
+
+vec3s Scene_GetLightContribution(const Scene *scene, HitCtx *ctx) {
 	int len;
-	vec3s final_color = Light_GetShapeAmbientColor(scene, hit);
+	vec3s final_color = Light_GetShapeAmbientColor(scene, ctx);
 
 	len = arrlen(scene->lights);
 
 	for(int i = 0; i < len; i++) {
 		vec3s current_color;
 
-		current_color = Light_GetContribution(scene, hit, i);
+		current_color = Light_GetContribution(scene, ctx, i);
 
 		final_color = glms_vec3_add(current_color, final_color);
 	}
@@ -157,7 +172,8 @@ Shape * Scene_AddShape(Scene *scene, ShapeType type) {
 
 	shape->type = type;
 	shape->shineness = 8.0f;
-	shape->k_diffuse = (vec3s) {1.0f, 1.0f, 1.0f};
+	shape->diffuse = (vec3s) {1.0f, 1.0f, 1.0f};
+	shape->part_reflection = 0.0f;
 
 	return shape;
 }

@@ -131,8 +131,8 @@ static void Parser_ParseShape(RenderData *data, const cJSON *json) {
 
 	Shape *shape = Scene_AddShape(&data->scene, type);
 
-	Parser_GetVec3(shape->k_diffuse, json, "diffuse");
-	Parser_GetVec3(shape->k_specular, json, "specular");
+	Parser_GetVec3(shape->diffuse, json, "diffuse");
+	Parser_GetVec3(shape->specular, json, "specular");
 	Parser_GetFloat(shape->shineness, json, "shineness");
 
 	switch(type) {

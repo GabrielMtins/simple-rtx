@@ -1,10 +1,15 @@
 #include "Render.h"
 
 #include <string.h>
+#include <stb_ds.h>
 
+#define MAX_RECURSION 5
 #define MAX_DISTANCE 1000.0f
 
+typedef HitCtx * HitCtxVector;
+
 static Color Render_Vec3ToColor(vec3s color);
+static Color Render_ComputeLineHitColor(const RenderData *data, HitCtxVector *ctxs);
 static Color Render_ComputePixel(const RenderData *data, int i, int j);
 
 static Color Render_Vec3ToColor(vec3s color) {
@@ -17,7 +22,13 @@ static Color Render_Vec3ToColor(vec3s color) {
 	};
 }
 
+static Color Render_ComputeLineHitColor(const RenderData *data, HitCtxVector *ctxs) {
+	for(int i = 0; i < MAX_RECURSION; i++) {
+	}
+}
+
 static Color Render_ComputePixel(const RenderData *data, int i, int j) {
+	/*
 	int w = data->export.w;
 	int h = data->export.h;
 
@@ -53,6 +64,7 @@ static Color Render_ComputePixel(const RenderData *data, int i, int j) {
 	vec3s found_color = Scene_GetLightContribution(&data->scene, &hit);
 
 	return Render_Vec3ToColor(found_color);
+	*/
 }
 
 void Render_CleanStart(RenderData *render_data) {

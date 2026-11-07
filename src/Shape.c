@@ -194,6 +194,7 @@ LineHit Box_GetLineHit(const Box *box, const Line *line) {
 
 	if(hit.found) {
 		hit.normal = glms_mat3_mulv(box->rotation_matrix, hit.normal);
+		hit.position = glms_vec3_lerp(line->start, line->end, hit.distance);
 	}
 
 	return hit;
