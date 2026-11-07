@@ -15,9 +15,9 @@ static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const
 		}
 	};
 
-	ctx.line.position = LINE_GET_POINT(ctx.line, 0.01f);
+	ctx.line.position = LINE_GET_POINT(ctx.line, 0.1f);
 
-	if(!Scene_Trace(scene, &ctx)) return false;
+	if(!Scene_Trace(scene, &ctx)) return true;
 
 	return ctx.hit.distance > glms_vec3_distance(light->position, hit->position);
 }
@@ -25,7 +25,10 @@ static bool Light_IsVisibleFromHit(const Scene *scene, const LineHit *hit, const
 static vec3s Light_GetShapeAmbientColor(const Scene *scene, const HitCtx *ctx) {
 	Shape *shape = &scene->shapes[ctx->hit.shape_index];
 
-	return glms_vec3_mul(scene->ambient, shape->diffuse);
+	return glms_vec3_mul(
+			scene->ambient,
+			Shape_GetDiffuseColor(shape, ctx->reflection)
+			);
 }
 
 static float Light_GetAttenuation(const LineHit *hit, const Light *light) {
@@ -76,7 +79,7 @@ static vec3s Light_GetContribution(const Scene *scene, const HitCtx *ctx, int li
 		final_color = glms_vec3_add(
 				final_color,
 				glms_vec3_scale(
-					glms_vec3_mul(shape->diffuse, light->diffuse),
+					glms_vec3_mul(Shape_GetDiffuseColor(shape, ctx->reflection), light->diffuse),
 					diffuse_part
 					)
 				);
@@ -99,6 +102,13 @@ static vec3s Light_GetContribution(const Scene *scene, const HitCtx *ctx, int li
 			Light_GetAttenuation(hit, light)
 			)
 			;
+}
+
+HitCtx HitCtx_Create(const Line *line) {
+	return (HitCtx) {
+		.line = *line,
+		.reflection = GLMS_VEC3_ZERO,
+	};
 }
 
 bool Scene_Trace(const Scene *scene, HitCtx *ctx) {
@@ -125,7 +135,19 @@ bool Scene_Trace(const Scene *scene, HitCtx *ctx) {
 	return ctx->hit.found;
 }
 
+bool Scene_ShouldReflect(const Scene *scene, const HitCtx *ctx) {
+	if(!ctx->hit.found) return false;
+
+	const Shape *shape = &scene->shapes[ctx->hit.shape_index];
+
+	if(shape->part_reflection < 0.01f) return false;
+
+	return true;
+}
+
 Line Scene_GetReflectionLine(const Scene *scene, const HitCtx *ctx) {
+	(void) scene;
+
 	vec3s ref = glms_normalize(
 			glms_vec3_sub(
 				glms_vec3_scale(
@@ -138,7 +160,7 @@ Line Scene_GetReflectionLine(const Scene *scene, const HitCtx *ctx) {
 
 	Line line = {
 		.position = ctx->hit.position,
-		.dir = ref
+		.dir = glms_vec3_scale(ref, -1.0f),
 	};
 
 	line.position = LINE_GET_POINT(line, 0.01f);
@@ -146,7 +168,7 @@ Line Scene_GetReflectionLine(const Scene *scene, const HitCtx *ctx) {
 	return line;
 }
 
-vec3s Scene_GetLightContribution(const Scene *scene, HitCtx *ctx) {
+vec3s Scene_GetLightContribution(const Scene *scene, const HitCtx *ctx) {
 	int len;
 	vec3s final_color = Light_GetShapeAmbientColor(scene, ctx);
 
@@ -159,6 +181,14 @@ vec3s Scene_GetLightContribution(const Scene *scene, HitCtx *ctx) {
 
 		final_color = glms_vec3_add(current_color, final_color);
 	}
+
+	final_color = glms_vec3_add(
+			final_color,
+			glms_vec3_scale(
+				ctx->reflection,
+				scene->shapes[ctx->hit.shape_index].part_reflection
+				)
+			);
 
 	return final_color;
 }

@@ -3,13 +3,12 @@
 #include <string.h>
 #include <stb_ds.h>
 
-#define MAX_RECURSION 5
-#define MAX_DISTANCE 1000.0f
+#define MAX_RECURSION 10
 
 typedef HitCtx * HitCtxVector;
 
 static Color Render_Vec3ToColor(vec3s color);
-static Color Render_ComputeLineHitColor(const RenderData *data, HitCtxVector *ctxs);
+static Color Render_ComputeLineHitColor(const RenderData *data, const Line *line);
 static Color Render_ComputePixel(const RenderData *data, int i, int j);
 
 static Color Render_Vec3ToColor(vec3s color) {
@@ -22,13 +21,40 @@ static Color Render_Vec3ToColor(vec3s color) {
 	};
 }
 
-static Color Render_ComputeLineHitColor(const RenderData *data, HitCtxVector *ctxs) {
+static Color Render_ComputeLineHitColor(const RenderData *data, const Line *line) {
+	vec3s final_color = GLMS_VEC3_ZERO;
+	Line next_line = *line;
+
+	HitCtxVector ctx_list = NULL;
+
 	for(int i = 0; i < MAX_RECURSION; i++) {
+		HitCtx ctx = HitCtx_Create(&next_line);
+
+		if(!Scene_Trace(&data->scene, &ctx)) break;
+
+		arrput(ctx_list, ctx);
+		
+		if(!Scene_ShouldReflect(&data->scene, &ctx)) {
+			break;
+		}
+
+		next_line = Scene_GetReflectionLine(&data->scene, &ctx);
 	}
+
+	while(arrlen(ctx_list) > 0) {
+		HitCtx ctx = arrpop(ctx_list);
+
+		ctx.reflection = final_color;
+
+		final_color = Scene_GetLightContribution(&data->scene, &ctx);
+	}
+
+	arrfree(ctx_list);
+
+	return Render_Vec3ToColor(final_color);
 }
 
 static Color Render_ComputePixel(const RenderData *data, int i, int j) {
-	/*
 	int w = data->export.w;
 	int h = data->export.h;
 
@@ -50,21 +76,12 @@ static Color Render_ComputePixel(const RenderData *data, int i, int j) {
 			(vec3s) {0.0f, 1.0f, 0.0f}
 			);
 
-	Line line;
+	Line line = {
+		.position = data->scene.camera.position,
+		.dir = dir,
+	};
 
-	line.start = data->scene.camera.position;
-	line.end = glms_vec3_add(line.start, glms_vec3_scale(dir, 1000.0f));
-
-	LineHit hit;
-
-	hit = Scene_Trace(&data->scene, &line);
-
-	if(!hit.found) return (Color) {0,0,0};
-
-	vec3s found_color = Scene_GetLightContribution(&data->scene, &hit);
-
-	return Render_Vec3ToColor(found_color);
-	*/
+	return Render_ComputeLineHitColor(data, &line);
 }
 
 void Render_CleanStart(RenderData *render_data) {

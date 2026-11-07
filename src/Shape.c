@@ -65,6 +65,10 @@ static LineHit Box_FoundHitNormalized(vec3s box_size, const Line *line) {
 	return closest_hit;
 }
 
+vec3s Shape_GetDiffuseColor(const Shape *shape, vec3s reflection) {
+	return shape->diffuse;
+}
+
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line) {
 	LineHit hit;
 

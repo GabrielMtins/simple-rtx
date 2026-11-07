@@ -134,6 +134,7 @@ static void Parser_ParseShape(RenderData *data, const cJSON *json) {
 	Parser_GetVec3(shape->diffuse, json, "diffuse");
 	Parser_GetVec3(shape->specular, json, "specular");
 	Parser_GetFloat(shape->shineness, json, "shineness");
+	Parser_GetFloat(shape->part_reflection, json, "reflection");
 
 	switch(type) {
 		case SHAPE_SPHERE:

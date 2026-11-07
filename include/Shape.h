@@ -69,6 +69,8 @@ typedef struct Shape {
 	float part_reflection;
 } Shape;
 
+vec3s Shape_GetDiffuseColor(const Shape *shape, vec3s reflection);
+
 LineHit Shape_GetLineHit(const Shape *shape, const Line *line);
 
 ShapeType ShapeType_GetTypeFromString(const char *str);

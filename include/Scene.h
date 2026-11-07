@@ -26,6 +26,7 @@ typedef struct Scene {
 	} camera;
 
 	vec3s ambient;
+	vec3s sky;
 } Scene;
 
 typedef struct HitCtx {
@@ -34,11 +35,15 @@ typedef struct HitCtx {
 	vec3s reflection;
 } HitCtx;
 
+HitCtx HitCtx_Create(const Line *line);
+
 bool Scene_Trace(const Scene *scene, HitCtx *ctx);
+
+bool Scene_ShouldReflect(const Scene *scene, const HitCtx *ctx);
 
 Line Scene_GetReflectionLine(const Scene *scene, const HitCtx *ctx);
 
-vec3s Scene_GetLightContribution(const Scene *scene, HitCtx *ctx);
+vec3s Scene_GetLightContribution(const Scene *scene, const HitCtx *ctx);
 
 void Scene_AddLight(Scene *scene, Light light);
 
