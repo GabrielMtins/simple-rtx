@@ -9,7 +9,6 @@ typedef HitCtx * HitCtxVector;
 
 static Color Render_Vec3ToColor(vec3s color);
 static Color Render_ComputeLineHitColor(const RenderData *data, const Line *line);
-static Color Render_ComputePixel(const RenderData *data, int i, int j);
 
 static Color Render_Vec3ToColor(vec3s color) {
 	color = glms_vec3_scale(glms_vec3_clamp(color, 0.0f, 1.0f), 255.0f);
@@ -54,7 +53,14 @@ static Color Render_ComputeLineHitColor(const RenderData *data, const Line *line
 	return Render_Vec3ToColor(final_color);
 }
 
-static Color Render_ComputePixel(const RenderData *data, int i, int j) {
+void Render_CleanStart(RenderData *render_data) {
+	memset(render_data, 0, sizeof(RenderData));
+
+	render_data->export.w = 640;
+	render_data->export.h = 360;
+}
+
+Color Render_ComputePixel(const RenderData *data, int i, int j) {
 	int w = data->export.w;
 	int h = data->export.h;
 
@@ -84,13 +90,6 @@ static Color Render_ComputePixel(const RenderData *data, int i, int j) {
 	return Render_ComputeLineHitColor(data, &line);
 }
 
-void Render_CleanStart(RenderData *render_data) {
-	memset(render_data, 0, sizeof(RenderData));
-
-	render_data->export.w = 640;
-	render_data->export.h = 360;
-}
-
 void Render_RenderImage(RenderData *data) {
 	int w = data->export.w;
 	int h = data->export.h;
@@ -112,4 +111,6 @@ void Render_RenderImage(RenderData *data) {
 	}
 
 	Image_Export(&data->image, "tmp.png");
+
+	Image_Free(&data->image);
 }

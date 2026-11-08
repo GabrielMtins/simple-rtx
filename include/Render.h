@@ -18,6 +18,8 @@ typedef struct RenderData {
 
 void Render_CleanStart(RenderData *render_data);
 
+Color Render_ComputePixel(const RenderData *data, int i, int j);
+
 void Render_RenderImage(RenderData *render_data);
 
 #endif
