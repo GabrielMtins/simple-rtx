@@ -8,6 +8,7 @@
 typedef struct ExportConfig {
 	int w, h;
 	char filename[EXPORT_FILENAME_SIZE + 1];
+	int recursion_depth;
 } ExportConfig;
 
 typedef struct RenderData {

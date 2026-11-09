@@ -3,8 +3,6 @@
 #include <string.h>
 #include <stb_ds.h>
 
-#define MAX_RECURSION 10
-
 typedef HitCtx * HitCtxVector;
 
 static Color Render_Vec3ToColor(vec3s color);
@@ -23,13 +21,18 @@ static Color Render_Vec3ToColor(vec3s color) {
 static Color Render_ComputeLineHitColor(const RenderData *data, const Line *line) {
 	vec3s final_color = GLMS_VEC3_ZERO;
 	Line next_line = *line;
+	bool should_use_sky = true;
 
 	HitCtxVector ctx_list = NULL;
 
-	for(int i = 0; i < MAX_RECURSION; i++) {
+	for(int i = 0; i < data->export.recursion_depth + 1; i++) {
 		HitCtx ctx = HitCtx_Create(&next_line);
 
+		should_use_sky = true;
+
 		if(!Scene_Trace(&data->scene, &ctx)) break;
+
+		should_use_sky = false;
 
 		arrput(ctx_list, ctx);
 		
@@ -38,6 +41,10 @@ static Color Render_ComputeLineHitColor(const RenderData *data, const Line *line
 		}
 
 		next_line = Scene_GetReflectionLine(&data->scene, &ctx);
+	}
+
+	if(should_use_sky) {
+		final_color = data->scene.sky;
 	}
 
 	while(arrlen(ctx_list) > 0) {
@@ -58,6 +65,7 @@ void Render_CleanStart(RenderData *render_data) {
 
 	render_data->export.w = 640;
 	render_data->export.h = 360;
+	render_data->export.recursion_depth = 1;
 }
 
 Color Render_ComputePixel(const RenderData *data, int i, int j) {

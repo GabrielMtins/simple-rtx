@@ -39,6 +39,7 @@
 
 static char * Parser_GetFileStr(const char *filename);
 static void Parser_ParseExport(RenderData *data, const cJSON *json);
+static void Parser_ParseScene(RenderData *data, const cJSON *json);
 static void Parser_ParseCamera(RenderData *data, const cJSON *json);
 static void Parser_ParseLights(RenderData *data, const cJSON *json);
 static void Parser_ParseShapes(RenderData *data, const cJSON *json);
@@ -74,6 +75,14 @@ static void Parser_ParseExport(RenderData *data, const cJSON *json) {
 	Parser_GetInt(data->export.w, json, "width");
 	Parser_GetInt(data->export.h, json, "height");
 	Parser_GetString(data->export.filename, json, "file");
+	Parser_GetInt(data->export.recursion_depth, json, "recursion-depth");
+}
+
+static void Parser_ParseScene(RenderData *data, const cJSON *json) {
+	if(!cJSON_IsObject(json)) return;
+
+	Parser_GetVec3(data->scene.ambient, json, "ambient");
+	Parser_GetVec3(data->scene.sky, json, "sky");
 }
 
 static void Parser_ParseCamera(RenderData *data, const cJSON *json) {
@@ -182,6 +191,7 @@ bool Parser_ParseFile(RenderData *data, const char *filename) {
 
 	Parser_ParseExport(data, cJSON_GetObjectItemCaseSensitive(json, "export"));
 	Parser_ParseCamera(data, cJSON_GetObjectItemCaseSensitive(json, "camera"));
+	Parser_ParseScene(data, cJSON_GetObjectItemCaseSensitive(json, "scene"));
 	Parser_ParseLights(data, cJSON_GetObjectItemCaseSensitive(json, "lights"));
 	Parser_ParseShapes(data, cJSON_GetObjectItemCaseSensitive(json, "shapes"));
 
