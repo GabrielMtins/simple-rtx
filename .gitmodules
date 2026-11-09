@@ -7,3 +7,6 @@
 [submodule "external/cjson"]
 	path = external/cjson
 	url = https://github.com/DaveGamble/cJSON.git
+[submodule "external/MParse"]
+	path = external/MParse
+	url = https://github.com/GabrielMtins/MParse.git
